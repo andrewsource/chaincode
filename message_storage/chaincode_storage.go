@@ -78,6 +78,15 @@ func (t *StorageChaincode) invoke(stub shim.ChaincodeStubInterface, args []strin
 		Kval[hash] = make([]string, 0)
 		Kval[hash] = append(Kval[hash], user)
 	}
+	//save state
+	Kvalbytes, err = json.Marshal(Kval)
+	if err != nil {
+		return nil, err
+	}
+	err = stub.PutState("keeper", Kvalbytes)
+	if err != nil {
+		return nil, err
+	}
 	return []byte{1}, nil
 
 }
