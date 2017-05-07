@@ -25,7 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-	"strconv"
+	//"strconv"
 )
 
 // StorageChaincode example simple Chaincode implementation
@@ -39,7 +39,11 @@ func (t *StorageChaincode) Init(stub shim.ChaincodeStubInterface, function strin
 	// }
 	//keeperName := args[0]
 	var keeper = make(map[byte][]byte)
-	err = stub.PutState("keeper", keeper)
+	keeperByte, err := json.Marshal(keeper)
+	if err != nil {
+		return nil, err
+	}
+	err = stub.PutState("keeper", keeperByte)
 	if err != nil {
 		return nil, err
 	}
@@ -52,8 +56,8 @@ func (t *StorageChaincode) invoke(stub shim.ChaincodeStubInterface, args []strin
 	if len(args) != 2 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 2")
 	}
-	hash := []byte(args[0])
-	user := []byte(args[1])
+	hash := byte(args[0])
+	user := byte(args[1])
 	Kvalbytes, err := stub.GetState("keeper")
 	if err != nil {
 		return nil, errors.New("Failed to get state")
@@ -66,7 +70,7 @@ func (t *StorageChaincode) invoke(stub shim.ChaincodeStubInterface, args []strin
 	if len(Kval[hash]) > 0 {
 		for i := 0; i < len(Kval[hash]); i++ {
 			if bytes.Equal(Kval[hash][i], user) {
-				return []byte(false), nil
+				return []byte(0), nil
 			}
 		}
 		Kval[hash] = append(Kval[hash], user)
@@ -74,7 +78,7 @@ func (t *StorageChaincode) invoke(stub shim.ChaincodeStubInterface, args []strin
 		Kval[hash] = make([]byte, 0)
 		Kval[hash] = append(Kval[hash], user)
 	}
-	return []byte(true), nil
+	return []byte(1), nil
 
 }
 
@@ -149,8 +153,8 @@ func (t *StorageChaincode) Query(stub shim.ChaincodeStubInterface, function stri
 	if len(args) != 2 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 2 arguments")
 	}
-	hash := []byte(args[0])
-	user := []byte(args[1])
+	hash := byte(args[0])
+	user := byte(args[1])
 	Kvalbytes, err := stub.GetState("keeper")
 	if err != nil {
 		jsonResp := "{\"Error\":\"Failed to get state for keeper\"}"
@@ -164,11 +168,11 @@ func (t *StorageChaincode) Query(stub shim.ChaincodeStubInterface, function stri
 	if len(Kval[hash]) > 0 {
 		for i := 0; i < len(Kval[hash]); i++ {
 			if bytes.Equal(Kval[hash][i], user) {
-				return []byte(true), nil
+				return []byte(1), nil
 			}
 		}
 	}
-	return []byte(false), nil
+	return []byte(0), nil
 }
 
 func main() {
