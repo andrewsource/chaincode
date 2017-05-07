@@ -38,7 +38,7 @@ func (t *StorageChaincode) Init(stub shim.ChaincodeStubInterface, function strin
 	// 	return nil, errors.New("Incorrect number of arguments. Expecting 1")
 	// }
 	//keeperName := args[0]
-	var keeper = make(map[byte][]byte)
+	var keeper = make(map[[]byte][][]byte)
 	keeperByte, err := json.Marshal(keeper)
 	if err != nil {
 		return nil, err
@@ -56,8 +56,8 @@ func (t *StorageChaincode) invoke(stub shim.ChaincodeStubInterface, args []strin
 	if len(args) != 2 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 2")
 	}
-	hash := byte(args[0])
-	user := byte(args[1])
+	hash := []byte(args[0])
+	user := []byte(args[1])
 	Kvalbytes, err := stub.GetState("keeper")
 	if err != nil {
 		return nil, errors.New("Failed to get state")
@@ -70,15 +70,15 @@ func (t *StorageChaincode) invoke(stub shim.ChaincodeStubInterface, args []strin
 	if len(Kval[hash]) > 0 {
 		for i := 0; i < len(Kval[hash]); i++ {
 			if bytes.Equal(Kval[hash][i], user) {
-				return []byte(0), nil
+				return []byte{0}, nil
 			}
 		}
 		Kval[hash] = append(Kval[hash], user)
 	} else {
-		Kval[hash] = make([]byte, 0)
+		Kval[hash] = make([][]byte, 0)
 		Kval[hash] = append(Kval[hash], user)
 	}
-	return []byte(1), nil
+	return []byte{1}, nil
 
 }
 
@@ -153,14 +153,14 @@ func (t *StorageChaincode) Query(stub shim.ChaincodeStubInterface, function stri
 	if len(args) != 2 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 2 arguments")
 	}
-	hash := byte(args[0])
-	user := byte(args[1])
+	hash := []byte(args[0])
+	user := []byte(args[1])
 	Kvalbytes, err := stub.GetState("keeper")
 	if err != nil {
 		jsonResp := "{\"Error\":\"Failed to get state for keeper\"}"
 		return nil, errors.New(jsonResp)
 	}
-	Kval := make(map[byte][]byte)
+	Kval := make(map[[]byte][][]byte)
 	err = json.Unmarshal(Kvalbytes, &Kval)
 	if err != nil {
 		return nil, errors.New("Failed to unmarsal keeper")
@@ -168,11 +168,11 @@ func (t *StorageChaincode) Query(stub shim.ChaincodeStubInterface, function stri
 	if len(Kval[hash]) > 0 {
 		for i := 0; i < len(Kval[hash]); i++ {
 			if bytes.Equal(Kval[hash][i], user) {
-				return []byte(1), nil
+				return []byte{1}, nil
 			}
 		}
 	}
-	return []byte(0), nil
+	return []byte{0}, nil
 }
 
 func main() {
